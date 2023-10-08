@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitHubAuth", "src\GitHubAuth\GitHubAuth.csproj", "{5B74962D-3C99-4A24-A1B7-6E8FAEBE449C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitHubAuth.Testing", "test\GitHubAuth.Testing\GitHubAuth.Testing.csproj", "{613903A0-2292-437B-B2CB-B0245E2FF480}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5B74962D-3C99-4A24-A1B7-6E8FAEBE449C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5B74962D-3C99-4A24-A1B7-6E8FAEBE449C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5B74962D-3C99-4A24-A1B7-6E8FAEBE449C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5B74962D-3C99-4A24-A1B7-6E8FAEBE449C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{613903A0-2292-437B-B2CB-B0245E2FF480}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{613903A0-2292-437B-B2CB-B0245E2FF480}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{613903A0-2292-437B-B2CB-B0245E2FF480}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{613903A0-2292-437B-B2CB-B0245E2FF480}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
