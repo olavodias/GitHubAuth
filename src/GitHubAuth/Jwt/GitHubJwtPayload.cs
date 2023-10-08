@@ -24,8 +24,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 // *****************************************************************************
+
 using System;
 using System.Text.Json.Serialization;
+using GitHubAuth.Extensions;
 
 namespace GitHubAuth.Jwt;
 
@@ -35,20 +37,49 @@ namespace GitHubAuth.Jwt;
 public sealed class GitHubJwtPayload
 {
     /// <summary>
+    /// The maximum number of minutes to add to the token expiration date
+    /// </summary>
+    /// <remarks>The maximum time accepted by a GitHub Token is 10 minutes. Take into consideration the fact that the request take a few seconds to process.</remarks>
+    public static int MAX_TOKEN_MINUTES = 8;
+
+    /// <summary>
+    /// The number of seconds allowed by GitHub to be considered as "clock drift".
+    /// </summary>
+    public static int CLOCK_DRIFT_SECONDS = 60;
+
+    /// <summary>
+    /// Internal variable to hold the date the token was issued
+    /// </summary>
+    private DateTime _issuedAt = DateTimeExtension.Epoch;
+    /// <summary>
     /// The time that the JWT was created. To protect against clock drift, we recommend that you set this 60 seconds in the past and ensure that your server's date and time is set accurately (for example, by using the Network Time Protocol).
     /// </summary>
+    /// <remarks>When changing this property, it automatically updates <see cref="ExpiresAt"/>, by adding 8 minutes to the date and time set for <see cref="IssuedAt"/></remarks>
 	[JsonPropertyName("iat")]
-	public long IssuedAt { get; set; }
+    [JsonConverter(typeof(TimeSinceEpochConverter))]
+    public DateTime IssuedAt
+    {
+        get { return _issuedAt; }
+        set
+        {
+            _issuedAt = value;
+            ExpiresAt = _issuedAt.AddMinutes(MAX_TOKEN_MINUTES);
+        }
+    }
+
     /// <summary>
     /// The expiration time of the JWT, after which it can't be used to request an installation token. The time must be no more than 10 minutes into the future.
     /// </summary>
     [JsonPropertyName("exp")]
-    public long ExpiresAt { get; set; }
+    [JsonConverter(typeof(TimeSinceEpochConverter))]
+    public DateTime ExpiresAt { get; set; } = DateTimeExtension.Epoch.AddMinutes(MAX_TOKEN_MINUTES);
+
     /// <summary>
     /// The ID of your GitHub App. This value is used to find the right public key to verify the signature of the JWT. You can find your app's ID with the GET /app REST API endpoint.
     /// </summary>
     [JsonPropertyName("iss")]
     public string? Issuer { get; set; }
+
     /// <summary>
     /// This should be RS256 since your JWT must be signed using the RS256 algorithm.
     /// </summary>
@@ -60,6 +91,7 @@ public sealed class GitHubJwtPayload
     /// </summary>
 	internal GitHubJwtPayload()
 	{
+
 	}
 
     /// <summary>

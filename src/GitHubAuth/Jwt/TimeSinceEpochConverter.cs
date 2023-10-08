@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// DateTimeExtension.cs
+// TimeSinceEpochConverter.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -24,27 +24,32 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 // *****************************************************************************
+
 using System;
-namespace GitHubAuth.Extension;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using GitHubAuth.Extensions;
+
+namespace GitHubAuth.Jwt;
 
 /// <summary>
-/// Represents Extensions for the <see cref="DateTime"/> class
+/// Converts a DateTime into a time in seconds since epoch
 /// </summary>
-public static class DateTimeExtension
+public sealed class TimeSinceEpochConverter: JsonConverter<DateTime>
 {
-	/// <summary>
-	/// The number of ticks in January 1st 1970 at 00:00:00
-	/// </summary>
-	public const long TicksSinceEpoch = 621355968000000000;
+    /// <inheritdoc/>
+    public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        var contents = reader.GetInt64();
+        var result = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc).AddSeconds(contents);
 
-	/// <summary>
-	/// Convert the date/time into UTC seconds, since epoch
-	/// </summary>
-	/// <param name="dateTime">The date time to be converted</param>
-	/// <returns>A value containing the UTC seconds since epoch (1970-01-01)</returns>
-	public static long ToUTCSeconds(this DateTime dateTime)
-	{
-		return (dateTime.ToUniversalTime().Ticks - TicksSinceEpoch) / TimeSpan.TicksPerSecond;
-	}	
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+    {
+        writer.WriteNumberValue(value.ToSecondsSinceEpoch());
+    }
 }
 
