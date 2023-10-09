@@ -24,11 +24,13 @@ with open(pem, 'rb') as pem_file:
 
 payload = {
     # Issued at time
-    'iat': int(time.time()),
+    #'iat': int(time.time()),
+    'iat':1577836800,
     # JWT expiration time (10 minutes maximum)
-    'exp': int(time.time()) + 600,
+    #'exp': int(time.time()) + 600,
+    'exp':1577837280,
     # GitHub App's identifier
-    'iss': app_id
+    'iss':app_id
 }
 
 # Create JWT

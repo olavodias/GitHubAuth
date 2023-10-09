@@ -40,12 +40,12 @@ public sealed class GitHubJwtPayload
     /// The maximum number of minutes to add to the token expiration date
     /// </summary>
     /// <remarks>The maximum time accepted by a GitHub Token is 10 minutes. Take into consideration the fact that the request take a few seconds to process.</remarks>
-    public static int MAX_TOKEN_MINUTES = 8;
+    public static readonly int MAX_TOKEN_MINUTES = 8;
 
     /// <summary>
     /// The number of seconds allowed by GitHub to be considered as "clock drift".
     /// </summary>
-    public static int CLOCK_DRIFT_SECONDS = 60;
+    public static readonly int CLOCK_DRIFT_SECONDS = 60;
 
     /// <summary>
     /// Internal variable to hold the date the token was issued
@@ -84,6 +84,7 @@ public sealed class GitHubJwtPayload
     /// This should be RS256 since your JWT must be signed using the RS256 algorithm.
     /// </summary>
     [JsonPropertyName("alg")]
+    [JsonIgnore]
     public string Algorithm { get; set; } = GitHubJwt.ALGORITHM;
 
     /// <summary>

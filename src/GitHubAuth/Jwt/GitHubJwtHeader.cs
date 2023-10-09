@@ -39,12 +39,14 @@ public sealed class GitHubJwtHeader
 	/// The Algorithm to be used for the signature
 	/// </summary>
 	[JsonPropertyName("alg")]
+	[JsonPropertyOrder(2)]
 	public string Algorithm { get; set; } = GitHubJwt.ALGORITHM;
 	/// <summary>
 	/// The type of the token
 	/// </summary>
 	[JsonPropertyName("typ")]
-	public string Type { get; set; } = "JWT";
+    [JsonPropertyOrder(1)]
+    public string Type { get; set; } = "JWT";
 
 	/// <summary>
 	/// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class

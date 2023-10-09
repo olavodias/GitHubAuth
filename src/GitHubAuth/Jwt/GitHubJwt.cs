@@ -24,6 +24,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 // *****************************************************************************
+
+#pragma warning disable IDE0074 // Use compound assignment
+
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -40,6 +43,7 @@ public sealed class GitHubJwt
 	/// The default algorithm used to generate a GitHub JWT
 	/// </summary>
 	public const string ALGORITHM = "RS256";
+
 	/// <summary>
 	/// The header of the JWT
 	/// </summary>
@@ -50,33 +54,74 @@ public sealed class GitHubJwt
 	public GitHubJwtPayload Payload { get; set; } = new();
 
 	/// <summary>
+	/// Internal variable to store the token
+	/// </summary>
+	private string? _token;
+
+	/// <summary>
+	/// The JWT Token
+	/// </summary>
+	/// <remarks>Returns null if the system is unable to generate the token</remarks>
+	public string? Token
+	{
+		get
+		{
+			// Automatically renew the token if it is expired or null
+			if (_token is null || DateTime.UtcNow > Payload.ExpiresAt)
+			{
+                Payload.IssuedAt = DateTime.UtcNow.AddSeconds(-GitHubJwtPayload.CLOCK_DRIFT_SECONDS);
+				try
+				{
+                    _token = GenerateToken();
+                }
+				catch
+				{
+					_token = null;
+				}
+            }
+
+			return _token;
+		}
+	}
+
+	/// <summary>
 	/// The path to the private key PEM file
 	/// </summary>
 	private readonly string PrivateKeyFileName;
+
+	private string? _privateKey;
 	/// <summary>
 	/// The contents of the private kew
 	/// </summary>
-	private readonly string PrivateKey;
+	public string? PrivateKey
+	{
+		get
+		{
+			return _privateKey;
+		}
+		internal set
+		{
+			_privateKey = value;
+			
+			PrivateKeyBytes = _privateKey is null ? null : Convert.FromBase64String(_privateKey);
+		}
+	}
 
+	/// <summary>
+	/// The byte array with the private key
+	/// </summary>
+	public byte[]? PrivateKeyBytes { get; private set; }
+	
 	/// <summary>
 	/// Initializes a new instance of the <see cref="GitHubJwt"/> class
 	/// </summary>
 	/// <param name="privateKeyFileName">The path to the private key PEM file</param>
+	/// <param name="appId">The ID of the GitHub App</param>
 	/// <exception cref="NullReferenceException">Thrown when the system could not read the file</exception>
-	public GitHubJwt(string privateKeyFileName)
+	public GitHubJwt(string privateKeyFileName, string appId)
 	{
 		PrivateKeyFileName = privateKeyFileName;
-		PrivateKey = ReadPrivateKey() ?? throw new NullReferenceException("Unable to read Private Key from file");
-	}
-
-	/// <summary>
-	/// Gets a string containing the JWT. This function will automatically generate a new token if the time expired
-	/// </summary>
-	/// <returns>A string containing the JWT</returns>
-	public string Get()
-	{
-		//TODO: Check if it is expired or not
-		return GenerateNewToken();
+		Payload.Issuer = appId;
 	}
 
 	/// <summary>
@@ -85,7 +130,7 @@ public sealed class GitHubJwt
 	/// <remarks>This function expects the file to only contains the private key. PEM files can contain more information, but this function will assume there is only a private key on it</remarks>
 	/// <returns>The contents of the private key file or null if the PEM file does not have a private key</returns>
 	/// <exception cref="System.IO.FileNotFoundException">Thrown when the private key file could not be found</exception>
-	private string? ReadPrivateKey()
+	internal string? ReadPrivateKey()
 	{
         if (!System.IO.File.Exists(PrivateKeyFileName))
             throw new System.IO.FileNotFoundException("Unable to locate private keyfile", PrivateKeyFileName);
@@ -139,7 +184,9 @@ public sealed class GitHubJwt
 
                     break;
 
-				case ' ': // Blanks or white spaces are ignored, unless the tag is open
+				case ' ':	// Blanks or white spaces are ignored, unless the tag is open
+				case '\n':  // Line breaks
+				case '\t':	// Tabs
 
 					if (isComment) sbComments.Append((char)c);
 					break;
@@ -164,35 +211,27 @@ public sealed class GitHubJwt
 
 		// Return the private key contents
 		return sbComments.ToString().EndsWith("PRIVATE KEY") ? sbPrivateKey.ToString() : null;
-
     }
 
 	/// <summary>
-	/// Generates a new token
+	/// Generates a token based on the <see cref="Header"/> and <see cref="Payload"/>
 	/// </summary>
 	/// <returns>A string containing the JWT</returns>
-    private string GenerateNewToken()
+    internal string GenerateToken()
 	{
-		var sb = new StringBuilder(400);
+        if (PrivateKey is null)
+			PrivateKey = ReadPrivateKey() ?? throw new NullReferenceException("Unable to read Private Key from file");
 
-		sb.Append(Base64Encode(Header.ToJSON()));
+        var sb = new StringBuilder(400);
+
+		sb.Append(Base64UrlEncode(Header.ToJSON()));
 		sb.Append('.');
-		sb.Append(Base64Encode(Payload.ToJSON()));
+		sb.Append(Base64UrlEncode(Payload.ToJSON()));
 
-		var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+		//var bytes = Encoding.UTF8.GetBytes(sb.ToString());
+		//return Convert.ToBase64String(EncryptData(bytes));
 
-		return Convert.ToBase64String(EncryptData(bytes));
-	}
-
-	/// <summary>
-	/// Encondes the text into Base64
-	/// </summary>
-	/// <param name="text">The text to be encoded</param>
-	/// <returns>The text encoded</returns>
-	private static string Base64Encode(string text)
-	{
-		var textInBytes = System.Text.Encoding.UTF8.GetBytes(text);
-		return System.Convert.ToBase64String(textInBytes);
+		return sb.ToString();
 	}
 
 	/// <summary>
@@ -202,11 +241,42 @@ public sealed class GitHubJwt
 	/// <returns>An array of bytes containing the encrypted data</returns>
 	private byte[] EncryptData(byte[] bytes)
 	{
+		/*
         using var rsa = new RSACryptoServiceProvider();
         rsa.FromXmlString(PrivateKey);
+		
         var encryptedData = rsa.Encrypt(bytes, true);
         return encryptedData;
+		*/
+
+		using var rsa = RSA.Create();
+		rsa.ImportRSAPrivateKey(PrivateKeyBytes, out _);
+		return rsa.Encrypt(bytes, RSAEncryptionPadding.Pkcs1);
+	}
+
+    /// <summary>
+    /// Encondes the text into Base64
+    /// </summary>
+    /// <param name="text">The text to be encoded</param>
+    /// <returns>The text encoded</returns>
+    internal static string Base64UrlEncode(string text)
+    {
+        var textInBytes = System.Text.Encoding.ASCII.GetBytes(text);
+		return System.Convert.ToBase64String(textInBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
+	internal static string Base64UrlDecode(string text)
+	{
+		var incoming = text.Replace('_', '/').Replace('-', '+');
+		switch (incoming.Length % 4)
+		{
+			case 2: incoming += "=="; break;
+			case 3: incoming += "="; break;
+		}
+
+		var bytes = Convert.FromBase64String(incoming);
+		return System.Text.Encoding.ASCII.GetString(bytes);
+	}
 }
 
+#pragma warning restore IDE0074 // Use compound assignment
