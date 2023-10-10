@@ -183,7 +183,7 @@ public sealed class GitHubJwt
                     }
 
                     break;
-
+				
 				case ' ':	// Blanks or white spaces are ignored, unless the tag is open
 				case '\n':  // Line breaks
 				case '\t':	// Tabs
@@ -222,16 +222,31 @@ public sealed class GitHubJwt
         if (PrivateKey is null)
 			PrivateKey = ReadPrivateKey() ?? throw new NullReferenceException("Unable to read Private Key from file");
 
-        var sb = new StringBuilder(400);
+		var headerJson = Header.ToJSON();
+		var payloadJson = Payload.ToJSON();
 
-		sb.Append(Base64UrlEncode(Header.ToJSON()));
-		sb.Append('.');
-		sb.Append(Base64UrlEncode(Payload.ToJSON()));
+        var sbToken = new StringBuilder(400);
 
-		//var bytes = Encoding.UTF8.GetBytes(sb.ToString());
-		//return Convert.ToBase64String(EncryptData(bytes));
+		sbToken.Append(Base64UrlEncode(headerJson));
+		sbToken.Append('.');
+		sbToken.Append(Base64UrlEncode(payloadJson));
 
-		return sb.ToString();
+		// Hash the Header and Payload using SHA256
+
+		//var sha256 = new HMACSHA256();
+		//var hashedHeaderAndPayload = sha256.ComputeHash(Encoding.UTF8.GetBytes(sbToken.ToString()));
+
+		//var bytesHeader = Encoding.UTF8.GetBytes(headerJson);
+		//var bytesPayload = Encoding.UTF8.GetBytes(payloadJson);
+
+		var bytesToEncrypt = Encoding.UTF8.GetBytes(sbToken.ToString());
+		var encryptedData = EncryptData(bytesToEncrypt);
+
+		
+		sbToken.Append('.');
+        sbToken.Append(Convert.ToBase64String(encryptedData).TrimEnd('=').Replace('+', '-').Replace('/', '_'));
+
+		return sbToken.ToString();
 	}
 
 	/// <summary>
@@ -251,8 +266,33 @@ public sealed class GitHubJwt
 
 		using var rsa = RSA.Create();
 		rsa.ImportRSAPrivateKey(PrivateKeyBytes, out _);
-		return rsa.Encrypt(bytes, RSAEncryptionPadding.Pkcs1);
-	}
+
+		//var pkcs1 = new RSAPKCS1SignatureFormatter(p);
+		//pkcs1.SetHashAlgorithm("RS256");
+		//pkcs1.CreateSignature()
+		
+		return rsa.SignData(bytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);		
+
+        /*System.Diagnostics.Debug.Write("CreateOaep SHA1.....: ");
+        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA1))));
+
+        System.Diagnostics.Debug.Write("CreateOaep SHA256...: ");
+        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA256))));
+
+        System.Diagnostics.Debug.Write("OaepSHA1...........: ");
+        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA1)));
+
+        System.Diagnostics.Debug.Write("OaepSHA256.........: ");
+        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA256)));
+
+        System.Diagnostics.Debug.Write("OaepSHA384.........: ");
+        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA384)));
+
+        System.Diagnostics.Debug.Write("OaepSHA512.........: ");
+        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA512)));
+        return rsa.Encrypt(bytes, RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA256));
+		*/
+    }
 
     /// <summary>
     /// Encondes the text into Base64

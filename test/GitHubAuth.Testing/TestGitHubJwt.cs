@@ -49,21 +49,15 @@ public class TestGitHubJwt
     [TestMethod]
     public void TestTokenGeneration()
     {
-        var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOiAxNTc3ODM2ODAwLCAiZXhwIjogMTU3NzgzNzI4MCwgImlzcyI6ICIxMjM0NTYifQ.ltu6VL2wMmsp5pT9M2ForRaD6SGntwk00T4cTSnAnU0v0JygF2LMWslgO98mXmvM6IlgjiziA2eUBf87TyA5puEbBzL1opvSMF6gpnOJ0LlsUDekrmcFZbceVM0B2cp4T2Oy6wJiOmxOlBQkAstJvuQJ94evtAjIF3goo_2VWKUqlcEB_n5_JXcWo_Ftrd6BQiKluFQII9_b_FeddfEOdo_O1HnYvPfyMQ-CL_9wmaI9RrNb3ZqQR9WAxM9r10mikCU_g1fVxcwGW97BtRVpkeWrOqXqC6aj3vHOVbWosAlzB-teyQZ0U03NILj8xdbYbAkM2rYwWF4jdU846BF0AA";
+        //var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOiAxNTc3ODM2ODAwLCAiZXhwIjogMTU3NzgzNzI4MCwgImlzcyI6ICIxMjM0NTYifQ.ltu6VL2wMmsp5pT9M2ForRaD6SGntwk00T4cTSnAnU0v0JygF2LMWslgO98mXmvM6IlgjiziA2eUBf87TyA5puEbBzL1opvSMF6gpnOJ0LlsUDekrmcFZbceVM0B2cp4T2Oy6wJiOmxOlBQkAstJvuQJ94evtAjIF3goo_2VWKUqlcEB_n5_JXcWo_Ftrd6BQiKluFQII9_b_FeddfEOdo_O1HnYvPfyMQ-CL_9wmaI9RrNb3ZqQR9WAxM9r10mikCU_g1fVxcwGW97BtRVpkeWrOqXqC6aj3vHOVbWosAlzB-teyQZ0U03NILj8xdbYbAkM2rYwWF4jdU846BF0AA";
+        var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1Nzc4MzY4MDAsImV4cCI6MTU3NzgzNzI4MCwiaXNzIjoiMTIzNDU2In0.D_7USwzf3_yGL8Sh4ZX9_LBJmZAF6TQHuk_1U4OP23slBW75-x3V63mvNAwZy0PG9kf7i1d7DAv8iHTo9Ih1Gvg1gy39V8q068aTrCYlrcMVwJpe09JqLvxFVfwAnF8zBZYO9UcPQAEwqUvBqQ65LUj_kWs0vEmr1i7HHIYUNExfOq7euYEiG6ITfuKrwPYRAS3MTBrAQBW2wDUYs3XLSGHe6gJtx__48z8pCqBUa4BrwSkLEbH13K8HjeFtYwjWnP3o9LffiKy2EN10ArjBbnyT_COBUZCAVPQB_2ErNjT2mv81hhFGVlquIz4uHQH70Y7jsh7owNQleWl7lqn9AA";
         var jwt = new GitHubJwt("sample_key.pem", AppID);
-
-
-
-        //var s2 = GitHubJwt.Base64UrlDecode("eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9");
-        //s2 = GitHubJwt.Base64UrlDecode("eyJpYXQiOiAxNTc3ODM2ODAwLCAiZXhwIjogMTU3NzgzNzI4MCwgImlzcyI6ICIxMjM0NTYifQ");
-        //s2 = GitHubJwt.Base64UrlDecode("eyJpYXQiOjE1Nzc4MzY4MDAsImV4cCI6MTU3NzgzNzI4MCwiaXNzIjoiMTIzNDU2In0");
-
 
         jwt.Payload.IssuedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
         var token = jwt.GenerateToken();
 
-        Assert.AreEqual(expectedJwt, jwt.GenerateToken());
+        Assert.AreEqual(expectedJwt, token);
 
         Assert.IsTrue(true);
     }
