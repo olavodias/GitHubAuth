@@ -40,17 +40,13 @@ public sealed class GitHubJwtPayload
     /// The maximum number of minutes to add to the token expiration date
     /// </summary>
     /// <remarks>The maximum time accepted by a GitHub Token is 10 minutes. Take into consideration the fact that the request take a few seconds to process.</remarks>
-    public static readonly int MAX_TOKEN_MINUTES = 8;
+    public static readonly int MAX_TOKEN_MINUTES = 10;
 
     /// <summary>
     /// The number of seconds allowed by GitHub to be considered as "clock drift".
     /// </summary>
     public static readonly int CLOCK_DRIFT_SECONDS = 60;
 
-    /// <summary>
-    /// Internal variable to hold the date the token was issued
-    /// </summary>
-    private DateTime _issuedAt = DateTimeExtension.Epoch;
     /// <summary>
     /// The time that the JWT was created. To protect against clock drift, we recommend that you set this 60 seconds in the past and ensure that your server's date and time is set accurately (for example, by using the Network Time Protocol).
     /// </summary>
@@ -63,29 +59,77 @@ public sealed class GitHubJwtPayload
         set
         {
             _issuedAt = value;
-            ExpiresAt = _issuedAt.AddMinutes(MAX_TOKEN_MINUTES);
+            OnPropertyChanged?.Invoke(nameof(IssuedAt));
+
+            ExpiresAt = _issuedAt.AddMinutes(MAX_TOKEN_MINUTES);            
         }
     }
+    private DateTime _issuedAt = DateTimeExtension.Epoch;
 
     /// <summary>
     /// The expiration time of the JWT, after which it can't be used to request an installation token. The time must be no more than 10 minutes into the future.
     /// </summary>
+    /// <remarks>This property is populated automatically when changing the <see cref="IssuedAt"/> property</remarks>
     [JsonPropertyName("exp")]
     [JsonConverter(typeof(TimeSinceEpochConverter))]
-    public DateTime ExpiresAt { get; set; } = DateTimeExtension.Epoch.AddMinutes(MAX_TOKEN_MINUTES);
+    public DateTime ExpiresAt
+    {
+        get { return _expiresAt; }
+        private set
+        {
+            _expiresAt = value;
+            OnPropertyChanged?.Invoke(nameof(ExpiresAt));
+            RenewalDateTime = MAX_TOKEN_MINUTES > 2 ? _expiresAt.AddMinutes(-2) : _expiresAt;
+        }
+    }
+    private DateTime _expiresAt = DateTimeExtension.Epoch.AddMinutes(MAX_TOKEN_MINUTES);
+
+    /// <summary>
+    /// The date/time when the token should be renewed. Usually it's two minutes prior to expiration.
+    /// </summary>
+    /// <remarks>This property is populated automatically when changing the <see cref="IssuedAt"/> property</remarks>
+    [JsonIgnore]
+    public DateTime RenewalDateTime
+    {
+        get { return _renewalDateTime; }
+        private set
+        {
+            _renewalDateTime = value;
+            OnPropertyChanged?.Invoke(nameof(RenewalDateTime));
+        }
+    }
+    private DateTime _renewalDateTime = DateTime.MinValue;
 
     /// <summary>
     /// The ID of your GitHub App. This value is used to find the right public key to verify the signature of the JWT. You can find your app's ID with the GET /app REST API endpoint.
     /// </summary>
     [JsonPropertyName("iss")]
-    public string? Issuer { get; set; }
+    public string? Issuer
+    {
+        get { return _issuer; }
+        set
+        {
+            _issuer = value;
+            OnPropertyChanged?.Invoke(nameof(Issuer));
+        }
+    }
+    private string? _issuer;
 
     /// <summary>
     /// This should be RS256 since your JWT must be signed using the RS256 algorithm.
     /// </summary>
     [JsonPropertyName("alg")]
     [JsonIgnore]
-    public string Algorithm { get; set; } = GitHubJwt.ALGORITHM;
+    public string Algorithm
+    {
+        get { return _algorithm; }
+        set
+        {
+            _algorithm = value;
+            OnPropertyChanged?.Invoke(nameof(Algorithm));
+        }
+    }
+    private string _algorithm = GitHubJwt.ALGORITHM;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GitHubJwtPayload"/> class
@@ -103,5 +147,11 @@ public sealed class GitHubJwtPayload
     {
         return System.Text.Json.JsonSerializer.Serialize(this);
     }
+
+    /// <summary>
+    /// An action triggered when there is a property change
+    /// </summary>
+    [JsonIgnore]
+    public Action<string>? OnPropertyChanged { get; set; }
 }
 

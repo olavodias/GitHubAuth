@@ -37,6 +37,14 @@ namespace GitHubAuth.Jwt;
 /// <summary>
 /// Represents the JSON Web Token used by GitHub to authenticate
 /// </summary>
+/// <remarks>
+/// A token is composed of:
+/// <code>
+/// var encodedHeader = Base64UrlEncode(header) + "." + Base64UrlEncode(payload)
+/// SHA256(encodedHeader)
+/// Sign(encodedHeader, privateKey)
+/// </code>
+/// </remarks>
 public sealed class GitHubJwt
 {
 	/// <summary>
@@ -61,13 +69,13 @@ public sealed class GitHubJwt
 	/// <summary>
 	/// The JWT Token
 	/// </summary>
-	/// <remarks>Returns null if the system is unable to generate the token</remarks>
+	/// <remarks>Returns null if the system is unable to generate the token. Automatically renews the token when it's near expiration.</remarks>
 	public string? Token
 	{
 		get
 		{
 			// Automatically renew the token if it is expired or null
-			if (_token is null || DateTime.UtcNow > Payload.ExpiresAt)
+			if (_token is null || DateTime.UtcNow > Payload.RenewalDateTime)
 			{
                 Payload.IssuedAt = DateTime.UtcNow.AddSeconds(-GitHubJwtPayload.CLOCK_DRIFT_SECONDS);
 				try
@@ -89,7 +97,6 @@ public sealed class GitHubJwt
 	/// </summary>
 	private readonly string PrivateKeyFileName;
 
-	private string? _privateKey;
 	/// <summary>
 	/// The contents of the private kew
 	/// </summary>
@@ -102,15 +109,11 @@ public sealed class GitHubJwt
 		internal set
 		{
 			_privateKey = value;
-			
-			PrivateKeyBytes = _privateKey is null ? null : Convert.FromBase64String(_privateKey);
+			_privateKeyBytes = _privateKey is null ? null : Convert.FromBase64String(_privateKey);
 		}
 	}
-
-	/// <summary>
-	/// The byte array with the private key
-	/// </summary>
-	public byte[]? PrivateKeyBytes { get; private set; }
+    private string? _privateKey;
+	private byte[]? _privateKeyBytes;
 	
 	/// <summary>
 	/// Initializes a new instance of the <see cref="GitHubJwt"/> class
@@ -121,7 +124,8 @@ public sealed class GitHubJwt
 	public GitHubJwt(string privateKeyFileName, string appId)
 	{
 		PrivateKeyFileName = privateKeyFileName;
-		Payload.Issuer = appId;
+        Payload.Issuer = appId;
+        Payload.OnPropertyChanged = (s) => _token = null;
 	}
 
 	/// <summary>
@@ -222,26 +226,18 @@ public sealed class GitHubJwt
         if (PrivateKey is null)
 			PrivateKey = ReadPrivateKey() ?? throw new NullReferenceException("Unable to read Private Key from file");
 
-		var headerJson = Header.ToJSON();
-		var payloadJson = Payload.ToJSON();
+        var sbToken = new StringBuilder(500); // Token usually have less than that
 
-        var sbToken = new StringBuilder(400);
-
-		sbToken.Append(Base64UrlEncode(headerJson));
+		sbToken.Append(Base64UrlEncode(Header.ToJSON()));
 		sbToken.Append('.');
-		sbToken.Append(Base64UrlEncode(payloadJson));
-
-		// Hash the Header and Payload using SHA256
-
-		//var sha256 = new HMACSHA256();
-		//var hashedHeaderAndPayload = sha256.ComputeHash(Encoding.UTF8.GetBytes(sbToken.ToString()));
-
-		//var bytesHeader = Encoding.UTF8.GetBytes(headerJson);
-		//var bytesPayload = Encoding.UTF8.GetBytes(payloadJson);
+		sbToken.Append(Base64UrlEncode(Payload.ToJSON()));
 
 		var bytesToEncrypt = Encoding.UTF8.GetBytes(sbToken.ToString());
-		var encryptedData = EncryptData(bytesToEncrypt);
 
+        using var rsa = RSA.Create();
+        rsa.ImportRSAPrivateKey(_privateKeyBytes, out _);
+
+        var encryptedData = rsa.SignData(bytesToEncrypt, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
 		
 		sbToken.Append('.');
         sbToken.Append(Convert.ToBase64String(encryptedData).TrimEnd('=').Replace('+', '-').Replace('/', '_'));
@@ -249,53 +245,8 @@ public sealed class GitHubJwt
 		return sbToken.ToString();
 	}
 
-	/// <summary>
-	/// Encrypt the data using the key defined at <see cref="PrivateKey"/>
-	/// </summary>
-	/// <param name="bytes">The array of bytes to be encrypted</param>
-	/// <returns>An array of bytes containing the encrypted data</returns>
-	private byte[] EncryptData(byte[] bytes)
-	{
-		/*
-        using var rsa = new RSACryptoServiceProvider();
-        rsa.FromXmlString(PrivateKey);
-		
-        var encryptedData = rsa.Encrypt(bytes, true);
-        return encryptedData;
-		*/
-
-		using var rsa = RSA.Create();
-		rsa.ImportRSAPrivateKey(PrivateKeyBytes, out _);
-
-		//var pkcs1 = new RSAPKCS1SignatureFormatter(p);
-		//pkcs1.SetHashAlgorithm("RS256");
-		//pkcs1.CreateSignature()
-		
-		return rsa.SignData(bytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);		
-
-        /*System.Diagnostics.Debug.Write("CreateOaep SHA1.....: ");
-        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA1))));
-
-        System.Diagnostics.Debug.Write("CreateOaep SHA256...: ");
-        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA256))));
-
-        System.Diagnostics.Debug.Write("OaepSHA1...........: ");
-        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA1)));
-
-        System.Diagnostics.Debug.Write("OaepSHA256.........: ");
-        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA256)));
-
-        System.Diagnostics.Debug.Write("OaepSHA384.........: ");
-        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA384)));
-
-        System.Diagnostics.Debug.Write("OaepSHA512.........: ");
-        System.Diagnostics.Debug.WriteLine(Convert.ToBase64String(rsa.Encrypt(bytes, RSAEncryptionPadding.OaepSHA512)));
-        return rsa.Encrypt(bytes, RSAEncryptionPadding.CreateOaep(HashAlgorithmName.SHA256));
-		*/
-    }
-
     /// <summary>
-    /// Encondes the text into Base64
+    /// Encodes the text into Base64
     /// </summary>
     /// <param name="text">The text to be encoded</param>
     /// <returns>The text encoded</returns>
@@ -304,6 +255,7 @@ public sealed class GitHubJwt
         var textInBytes = System.Text.Encoding.ASCII.GetBytes(text);
 		return System.Convert.ToBase64String(textInBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
+
 
 	internal static string Base64UrlDecode(string text)
 	{

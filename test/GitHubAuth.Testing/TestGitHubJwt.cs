@@ -6,9 +6,7 @@ namespace GitHubAuth.Testing;
 [TestClass]
 public class TestGitHubJwt
 {
-    /// <summary>
-    /// The default AppID for calculating the token
-    /// </summary>
+    private static readonly string PrivateKeyFile = "sample_key.pem";
     private static readonly string AppID = "123456";
 
     [TestMethod]
@@ -21,16 +19,24 @@ public class TestGitHubJwt
         // Check January 1st 2020 at 00:00:00 UTC
         currentDateTime = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
         Assert.AreEqual(1577836800, currentDateTime.ToSecondsSinceEpoch());
+
+        // Check May 1st 2022 at 00:00:00 UTC
+        currentDateTime = new DateTime(2022, 5, 1, 0, 0, 0, DateTimeKind.Utc);
+        Assert.AreEqual(1651363200, currentDateTime.ToSecondsSinceEpoch());
+
+        // Check May 1st 2022 at 00:10:00 UTC
+        currentDateTime = new DateTime(2022, 5, 1, 0, 10, 0, DateTimeKind.Utc);
+        Assert.AreEqual(1651363800, currentDateTime.ToSecondsSinceEpoch());
     }
 
     [TestMethod]
     public void TestSerialization()
     {
         // Serialize the Token
-        var expectedSerializedValues = "{\"iat\":1577836800,\"exp\":1577837280,\"iss\":\"123456\",\"alg\":\"RS256\"}";
+        var expectedSerializedValues = "{\"iat\":1651363200,\"exp\":1651363800,\"iss\":\"123456\"}";
         var payload = new GitHubJwtPayload
         {
-            IssuedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+            IssuedAt = new DateTime(2022, 5, 1, 0, 0, 0, DateTimeKind.Utc),
             Issuer = AppID
         };
 
@@ -49,16 +55,37 @@ public class TestGitHubJwt
     [TestMethod]
     public void TestTokenGeneration()
     {
-        //var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOiAxNTc3ODM2ODAwLCAiZXhwIjogMTU3NzgzNzI4MCwgImlzcyI6ICIxMjM0NTYifQ.ltu6VL2wMmsp5pT9M2ForRaD6SGntwk00T4cTSnAnU0v0JygF2LMWslgO98mXmvM6IlgjiziA2eUBf87TyA5puEbBzL1opvSMF6gpnOJ0LlsUDekrmcFZbceVM0B2cp4T2Oy6wJiOmxOlBQkAstJvuQJ94evtAjIF3goo_2VWKUqlcEB_n5_JXcWo_Ftrd6BQiKluFQII9_b_FeddfEOdo_O1HnYvPfyMQ-CL_9wmaI9RrNb3ZqQR9WAxM9r10mikCU_g1fVxcwGW97BtRVpkeWrOqXqC6aj3vHOVbWosAlzB-teyQZ0U03NILj8xdbYbAkM2rYwWF4jdU846BF0AA";
-        var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1Nzc4MzY4MDAsImV4cCI6MTU3NzgzNzI4MCwiaXNzIjoiMTIzNDU2In0.D_7USwzf3_yGL8Sh4ZX9_LBJmZAF6TQHuk_1U4OP23slBW75-x3V63mvNAwZy0PG9kf7i1d7DAv8iHTo9Ih1Gvg1gy39V8q068aTrCYlrcMVwJpe09JqLvxFVfwAnF8zBZYO9UcPQAEwqUvBqQ65LUj_kWs0vEmr1i7HHIYUNExfOq7euYEiG6ITfuKrwPYRAS3MTBrAQBW2wDUYs3XLSGHe6gJtx__48z8pCqBUa4BrwSkLEbH13K8HjeFtYwjWnP3o9LffiKy2EN10ArjBbnyT_COBUZCAVPQB_2ErNjT2mv81hhFGVlquIz4uHQH70Y7jsh7owNQleWl7lqn9AA";
-        var jwt = new GitHubJwt("sample_key.pem", AppID);
+        var jwt = new GitHubJwt(PrivateKeyFile, AppID);
 
+        // Token 01 (issued at 2020-01-01, issuer 123456)
+        var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1Nzc4MzY4MDAsImV4cCI6MTU3NzgzNzQwMCwiaXNzIjoiMTIzNDU2In0.PQCqR9duu-3UETb07KWFuutV55ZM1XDmT2O_hVQoFeR16KC-NxJ3pkQzy3q6JqZlzqm8jojz-v1OBibsmMTZhuqsCa4_DL0meXNRsGGxRX2TKjTzKSiFcvdRLirjP-AXOQHIRzXwGauAYn9OaGS_PK5WRWPZN3tg9zfzZF9AesNFJzli3HJ9wLPVCOQIElnrbXqa6Q273PetsFdae5HKkHHBQarTvE_7QhVM1qKyKz5Dq5fn9Rnb7jRJ4OBcXKsnGU_BMhfW2H4jVLQkjcJ9BA0J25_ot7tTPa-Mu8yGK5KctVxaatYllPcq0Co696J1d0caj7dEMZYAglN2JX2kKQ";
         jwt.Payload.IssuedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        Assert.AreEqual(expectedJwt, jwt.GenerateToken());
 
-        var token = jwt.GenerateToken();
+        // Token 02 (issued at 2022-05-01, issuer 123456)
+        expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE2NTEzNjMyMDAsImV4cCI6MTY1MTM2MzgwMCwiaXNzIjoiMTIzNDU2In0.XaSBPnArytB0B9enpJRZpeuJreNoCC-GlyMlqS8RQni6P2yz1dSdH-phJdqivFZP5hGA2QOn2mYRI2__idM81DKUeHJ5uTyOEV-uuR4jHbow87lblnp4his10je6AqTz5kuw6KHgLc6XaGnBLDHl_uRoH-kghQ9OQra3lymvCSBMJi-4pNT6mbNuWg5DT3xN-Ww9K573OxxubUrgjHfdb0I-EWAl5U6pZ2Bqisrk46tKIsYzN9x52tpqhu5S7AEbrRDR0W_gQD3lLdBE6SmbbX4b1a6uVchcOPPBFxcr5NubY7aBiiKJte2pVHYeLzd9gaCyiDZwXsW47TAKKah4DA";
+        jwt.Payload.IssuedAt = new DateTime(2022, 5, 1, 0, 0, 0, DateTimeKind.Utc);
+        Assert.AreEqual(expectedJwt, jwt.GenerateToken());
+    }
 
-        Assert.AreEqual(expectedJwt, token);
+    [TestMethod]
+    public void TestTokenRenewal()
+    {
+        var jwt = new GitHubJwt(PrivateKeyFile, AppID);
 
-        Assert.IsTrue(true);
+        // Token 01 (issued at 2020-01-01, issuer 123456)
+        var expectedJwt = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE1Nzc4MzY4MDAsImV4cCI6MTU3NzgzNzQwMCwiaXNzIjoiMTIzNDU2In0.PQCqR9duu-3UETb07KWFuutV55ZM1XDmT2O_hVQoFeR16KC-NxJ3pkQzy3q6JqZlzqm8jojz-v1OBibsmMTZhuqsCa4_DL0meXNRsGGxRX2TKjTzKSiFcvdRLirjP-AXOQHIRzXwGauAYn9OaGS_PK5WRWPZN3tg9zfzZF9AesNFJzli3HJ9wLPVCOQIElnrbXqa6Q273PetsFdae5HKkHHBQarTvE_7QhVM1qKyKz5Dq5fn9Rnb7jRJ4OBcXKsnGU_BMhfW2H4jVLQkjcJ9BA0J25_ot7tTPa-Mu8yGK5KctVxaatYllPcq0Co696J1d0caj7dEMZYAglN2JX2kKQ";
+        jwt.Payload.IssuedAt = new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        Assert.AreEqual(expectedJwt, jwt.GenerateToken());
+
+        // Token 02 - Use the property "Token", which should force the generation of a new token since it expired
+        var newToken = jwt.Token;
+        Assert.IsNotNull(newToken);
+        Assert.IsTrue(jwt.Payload.IssuedAt > DateTime.UtcNow.AddMinutes(-2));
+
+        // Token 03 - Call the property again, it should have the same issued date/time
+        var currentIssueDate = jwt.Payload.IssuedAt;
+        _ = jwt.Token;
+        Assert.AreEqual(currentIssueDate, jwt.Payload.IssuedAt);
     }
 }
