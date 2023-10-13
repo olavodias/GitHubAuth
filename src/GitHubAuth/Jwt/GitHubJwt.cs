@@ -256,7 +256,11 @@ public sealed class GitHubJwt
         return System.Convert.ToBase64String(textInBytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
     }
 
-
+    /// <summary>
+    /// Decodes a Base64 URL
+    /// </summary>
+    /// <param name="text">The text to be decoded</param>
+    /// <returns>The text decoded</returns>
     internal static string Base64UrlDecode(string text)
     {
         var incoming = text.Replace('_', '/').Replace('-', '+');
