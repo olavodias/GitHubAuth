@@ -32,10 +32,10 @@ namespace GitHubAuth.Extensions;
 /// </summary>
 public static class DateTimeExtension
 {
-	/// <summary>
-	/// The number of ticks in January 1st 1970 at 00:00:00
-	/// </summary>
-	public const long TicksAtEpoch = 621355968000000000;
+    /// <summary>
+    /// The number of ticks in January 1st 1970 at 00:00:00
+    /// </summary>
+    public const long TicksAtEpoch = 621355968000000000;
 
     /// <summary>
     /// A constant to define the epoch
@@ -48,9 +48,9 @@ public static class DateTimeExtension
     /// <param name="dateTime">The date time to be converted</param>
     /// <returns>A value containing the UTC seconds since epoch (1970-01-01)</returns>
     public static long ToSecondsSinceEpoch(this DateTime dateTime)
-	{
-		return (dateTime.ToUniversalTime().Ticks - TicksAtEpoch) / TimeSpan.TicksPerSecond;
-	}
+    {
+        return (dateTime.ToUniversalTime().Ticks - TicksAtEpoch) / TimeSpan.TicksPerSecond;
+    }
 
 }
 
