@@ -35,6 +35,7 @@ namespace GitHubAuth.Jwt;
 /// </summary>
 public sealed class GitHubJwtHeader
 {
+
 	/// <summary>
 	/// The Algorithm to be used for the signature
 	/// </summary>

@@ -61,7 +61,7 @@ public sealed class GitHubJwtPayload
             _issuedAt = value;
             OnPropertyChanged?.Invoke(nameof(IssuedAt));
 
-            ExpiresAt = _issuedAt.AddMinutes(MAX_TOKEN_MINUTES);            
+            ExpiresAt = _issuedAt.AddMinutes(MAX_TOKEN_MINUTES);
         }
     }
     private DateTime _issuedAt = DateTimeExtension.Epoch;
@@ -135,9 +135,9 @@ public sealed class GitHubJwtPayload
     /// Initializes a new instance of the <see cref="GitHubJwtPayload"/> class
     /// </summary>
 	internal GitHubJwtPayload()
-	{
+    {
 
-	}
+    }
 
     /// <summary>
     /// Serializes the object into a JSON format
