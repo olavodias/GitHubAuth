@@ -35,7 +35,7 @@ namespace GitHubAuth.Jwt;
 /// <summary>
 /// Converts a DateTime into a time in seconds since epoch
 /// </summary>
-public sealed class TimeSinceEpochConverter: JsonConverter<DateTime>
+public sealed class TimeSinceEpochConverter : JsonConverter<DateTime>
 {
     /// <inheritdoc/>
     public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)

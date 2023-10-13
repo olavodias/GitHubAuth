@@ -36,33 +36,33 @@ namespace GitHubAuth.Jwt;
 public sealed class GitHubJwtHeader
 {
 
-	/// <summary>
-	/// The Algorithm to be used for the signature
-	/// </summary>
-	[JsonPropertyName("alg")]
-	[JsonPropertyOrder(2)]
-	public string Algorithm { get; set; } = GitHubJwt.ALGORITHM;
-	/// <summary>
-	/// The type of the token
-	/// </summary>
-	[JsonPropertyName("typ")]
+    /// <summary>
+    /// The Algorithm to be used for the signature
+    /// </summary>
+    [JsonPropertyName("alg")]
+    [JsonPropertyOrder(2)]
+    public string Algorithm { get; set; } = GitHubJwt.ALGORITHM;
+    /// <summary>
+    /// The type of the token
+    /// </summary>
+    [JsonPropertyName("typ")]
     [JsonPropertyOrder(1)]
     public string Type { get; set; } = "JWT";
 
-	/// <summary>
-	/// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class
-	/// </summary>
-	internal GitHubJwtHeader()
-	{
-	}
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class
+    /// </summary>
+    internal GitHubJwtHeader()
+    {
+    }
 
-	/// <summary>
-	/// Serializes the object into a JSON format
-	/// </summary>
-	/// <returns>A string containing the serialized object</returns>
-	public string ToJSON()
-	{
-		return JsonSerializer.Serialize(this);
-	}
+    /// <summary>
+    /// Serializes the object into a JSON format
+    /// </summary>
+    /// <returns>A string containing the serialized object</returns>
+    public string ToJSON()
+    {
+        return JsonSerializer.Serialize(this);
+    }
 }
 
