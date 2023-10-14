@@ -2,10 +2,38 @@
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <Nullable>enable</Nullable>
     <LangVersion>10.0</LangVersion>
+
+    <!-- Nuget Package Info -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>0.1.0-preview.1</Version>
+    <Authors>Olavo Henrique Dias</Authors>
+    <Company>Olavo Henrique Dias</Company>
+    <Product>GitHubAuth</Product>
+    <Description>The fastest library to generate a JSON Web Token in the format needed for the GitHub API</Description>
+    <Summary>The fastest library to generate a JSON Web Token in the format needed for the GitHub API</Summary>
+    <Copyright>Copyright © Olavo Henrique Dias 2023</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Title>GitHubAuth.NET</Title>
+    <PackageId>GitHubAuth</PackageId>
+    <PackageTags>GitHub Apps .NET Git Hub Dot Net JWT Authentication GitHubJWT JSON Web Token</PackageTags>    
+    <PackageReadmeFile>README.MD</PackageReadmeFile>
+    <PackageIcon>packageIcon.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/olavodias/GitHubApps</PackageProjectUrl>
+    <PackageLicenseExpression></PackageLicenseExpression>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <RootNamespace>GitHubAuth</RootNamespace>
+    <AssemblyName>GitHubAuth</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
   </PropertyGroup>
+
+  <ItemGroup>
+      <None Include="packageIcon.png" Pack="true" PackagePath="\" />
+      <None Include="../../README.MD" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="7.0.3" />

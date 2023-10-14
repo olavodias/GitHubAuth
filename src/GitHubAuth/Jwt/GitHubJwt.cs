@@ -55,11 +55,11 @@ public sealed class GitHubJwt
     /// <summary>
     /// The header of the JWT
     /// </summary>
-    public GitHubJwtHeader Header { get; set; } = new();
+    public GitHubJwtHeader Header { get; } = new();
     /// <summary>
     /// The payload of the JWT
     /// </summary>
-    public GitHubJwtPayload Payload { get; set; } = new();
+    public GitHubJwtPayload Payload { get; } = new();
 
     /// <summary>
     /// Internal variable to store the token
