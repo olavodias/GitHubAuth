@@ -26,7 +26,7 @@ The header should have the algorithm and the type of token.
   "typ": "JWT",
   "alg": "RS256"
 }
-``
+```
 
 ### Payload
 
