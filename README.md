@@ -1,5 +1,10 @@
 # GitHub Authentication
 
+[![nuget](https://img.shields.io/nuget/v/GitHubAuth.svg)](https://www.nuget.org/packages/GitHubAuth/) 
+![GitHub release](https://img.shields.io/github/release/olavodias/GitHubAuth.svg)
+![NuGet](https://img.shields.io/nuget/dt/GitHubAuth.svg)
+![license](https://img.shields.io/github/license/olavodias/GitHubAuth.svg)
+
 The GitHub Authentication is a library that provides the [fastest way](#benchmarks) to generate a JWT (JSON Web Token) to be used when calling the GitHub REST API.
 
 This library has no dependencies on any external libraries. It is compatible with `net6.0` and beyond.
@@ -26,7 +31,7 @@ The header should have the algorithm and the type of token.
   "typ": "JWT",
   "alg": "RS256"
 }
-```
+``
 
 ### Payload
 
@@ -56,3 +61,5 @@ The method to generate the JWT in this library is very simplified and optimized.
 |-------------------- |---------:|----------:|----------:|-----:|--------:|-------:|----------:|
 | TokenWithGitHubAuth | 1.921 ms | 0.0081 ms | 0.0075 ms |    1 |  3.9063 |      - |  29.83 KB |
 | TokenWithGitHubJwt  | 2.514 ms | 0.0164 ms | 0.0146 ms |    2 | 70.3125 | 3.9063 | 329.65 KB |
+
+> The comparison was made using the `BenchmarkDotNet` library
