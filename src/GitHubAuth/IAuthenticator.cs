@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// GitHubJwtHeader.cs
+// IAuthenticator.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -25,46 +25,22 @@
 // THE SOFTWARE.
 // *****************************************************************************
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace GitHubAuth.Jwt;
+namespace GitHubAuth;
 
 /// <summary>
-/// Represents the header of a JSON Web Token to be used by GitHub Apps
+/// Represents the methods that need to be implemented by a class that performs GitHub Authentication
 /// </summary>
-public sealed class GitHubJwtHeader
+public interface IAuthenticator
 {
+    /// <summary>
+    /// Authenticate to GitHub
+    /// </summary>
+    public void Authenticate();
 
     /// <summary>
-    /// The Algorithm to be used for the signature
+    /// Authenticate to GitHub
     /// </summary>
-    [JsonPropertyName("alg")]
-    [JsonPropertyOrder(2)]
-    public string Algorithm { get; }
-
-    /// <summary>
-    /// The type of the token
-    /// </summary>
-    [JsonPropertyName("typ")]
-    [JsonPropertyOrder(1)]
-    public string Type { get; } = "JWT";
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class
-    /// </summary>
-    internal GitHubJwtHeader(string algorithm)
-    {
-        Algorithm = algorithm;
-    }
-
-    /// <summary>
-    /// Serializes the object into a JSON format
-    /// </summary>
-    /// <returns>A string containing the serialized object</returns>
-    public string ToJSON()
-    {
-        return JsonSerializer.Serialize(this);
-    }
+    /// <param name="args">An object array with arguments to be used by the authentication</param>
+    public void Authenticate(params object[]? args);
 }
-

@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// GitHubJwtHeader.cs
+// IGitHubJwt.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -25,46 +25,18 @@
 // THE SOFTWARE.
 // *****************************************************************************
 using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-
 namespace GitHubAuth.Jwt;
 
 /// <summary>
-/// Represents the header of a JSON Web Token to be used by GitHub Apps
+/// An interface to be implemented by any class that generates a GitHub JSON Web Token
 /// </summary>
-public sealed class GitHubJwtHeader
+public interface IGitHubJwt
 {
 
     /// <summary>
-    /// The Algorithm to be used for the signature
+    /// The JWT Token
     /// </summary>
-    [JsonPropertyName("alg")]
-    [JsonPropertyOrder(2)]
-    public string Algorithm { get; }
-
-    /// <summary>
-    /// The type of the token
-    /// </summary>
-    [JsonPropertyName("typ")]
-    [JsonPropertyOrder(1)]
-    public string Type { get; } = "JWT";
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class
-    /// </summary>
-    internal GitHubJwtHeader(string algorithm)
-    {
-        Algorithm = algorithm;
-    }
-
-    /// <summary>
-    /// Serializes the object into a JSON format
-    /// </summary>
-    /// <returns>A string containing the serialized object</returns>
-    public string ToJSON()
-    {
-        return JsonSerializer.Serialize(this);
-    }
+    /// <remarks>Returns null if the system is unable to generate the token. Automatically renews the token when it's near expiration.</remarks>
+    public string? Token { get; }
 }
 

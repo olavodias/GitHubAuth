@@ -35,17 +35,10 @@ using System.Text;
 namespace GitHubAuth.Jwt;
 
 /// <summary>
-/// Represents the JSON Web Token used by GitHub to authenticate
+/// Represents the JSON Web Token used by GitHub to authenticate.
+/// This token is signed using the RS256 algorithm. 
 /// </summary>
-/// <remarks>
-/// A token is composed of:
-/// <code>
-/// var encodedHeader = Base64UrlEncode(header) + "." + Base64UrlEncode(payload)
-/// SHA256(encodedHeader)
-/// Sign(encodedHeader, privateKey)
-/// </code>
-/// </remarks>
-public sealed class GitHubJwt
+public sealed class GitHubJwtWithRS256: IGitHubJwt
 {
     /// <summary>
     /// The default algorithm used to generate a GitHub JWT
@@ -55,7 +48,7 @@ public sealed class GitHubJwt
     /// <summary>
     /// The header of the JWT
     /// </summary>
-    public GitHubJwtHeader Header { get; } = new();
+    public GitHubJwtHeader Header { get; } = new(ALGORITHM);
     /// <summary>
     /// The payload of the JWT
     /// </summary>
@@ -66,10 +59,7 @@ public sealed class GitHubJwt
     /// </summary>
     private string? _token;
 
-    /// <summary>
-    /// The JWT Token
-    /// </summary>
-    /// <remarks>Returns null if the system is unable to generate the token. Automatically renews the token when it's near expiration.</remarks>
+    /// <inheritdoc/>
     public string? Token
     {
         get
@@ -116,12 +106,12 @@ public sealed class GitHubJwt
     private byte[]? _privateKeyBytes;
 
     /// <summary>
-    /// Initializes a new instance of the <see cref="GitHubJwt"/> class
+    /// Initializes a new instance of the <see cref="GitHubJwtWithRS256"/> class
     /// </summary>
     /// <param name="privateKeyFileName">The path to the private key PEM file</param>
     /// <param name="appId">The ID of the GitHub App</param>
     /// <exception cref="NullReferenceException">Thrown when the system could not read the file</exception>
-    public GitHubJwt(string privateKeyFileName, string appId)
+    public GitHubJwtWithRS256(string privateKeyFileName, long appId)
     {
         PrivateKeyFileName = privateKeyFileName;
         Payload.Issuer = appId;

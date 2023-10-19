@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// GitHubJwtHeader.cs
+// AccessToken.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -25,46 +25,45 @@
 // THE SOFTWARE.
 // *****************************************************************************
 using System;
-using System.Text.Json;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace GitHubAuth.Jwt;
+namespace GitHubAuth;
 
 /// <summary>
-/// Represents the header of a JSON Web Token to be used by GitHub Apps
+/// Represents an Access Token containing the token, the expiration date, and permissions
 /// </summary>
-public sealed class GitHubJwtHeader
+public sealed class AccessToken
 {
+	/// <summary>
+	/// The token
+	/// </summary>
+	[JsonPropertyName("token")]
+	public string? Token { get; set; }
 
-    /// <summary>
-    /// The Algorithm to be used for the signature
-    /// </summary>
-    [JsonPropertyName("alg")]
-    [JsonPropertyOrder(2)]
-    public string Algorithm { get; }
+	/// <summary>
+	/// The date and time the token expires
+	/// </summary>
+	[JsonPropertyName("expires_at")]
+	public DateTime? ExpiresAt { get; set; }
 
-    /// <summary>
-    /// The type of the token
-    /// </summary>
-    [JsonPropertyName("typ")]
-    [JsonPropertyOrder(1)]
-    public string Type { get; } = "JWT";
+	/// <summary>
+	/// A dictionary containing the permissions of this token
+	/// </summary>
+	[JsonPropertyName("permissions")]
+	public Dictionary<string, string>? Permissions { get; set; }
 
-    /// <summary>
-    /// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class
-    /// </summary>
-    internal GitHubJwtHeader(string algorithm)
-    {
-        Algorithm = algorithm;
-    }
+	/// <summary>
+	/// The repository selection
+	/// </summary>
+	[JsonPropertyName("repository_selection")]
+	public string? RepositorySelection { get; set; }
 
-    /// <summary>
-    /// Serializes the object into a JSON format
-    /// </summary>
-    /// <returns>A string containing the serialized object</returns>
-    public string ToJSON()
-    {
-        return JsonSerializer.Serialize(this);
-    }
+	/// <summary>
+	/// Initializes a new instance of the <see cref="AccessToken"/> class
+	/// </summary>
+	public AccessToken()
+	{
+	}
 }
 

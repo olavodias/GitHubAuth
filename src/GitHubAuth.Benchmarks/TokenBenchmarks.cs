@@ -29,6 +29,7 @@
 
 using System;
 using BenchmarkDotNet.Attributes;
+using GitHubAuth.Jwt;
 
 namespace GitHubAuth.Benchmarks;
 
@@ -44,7 +45,7 @@ public class TokenBenchmarks
     [Benchmark]
     public void TokenWithGitHubAuth()
     {
-        var jwt = new GitHubAuth.Jwt.GitHubJwt(PRIVATE_KEY_FILE, "123456");
+        var jwt = new GitHubJwtWithRS256(PRIVATE_KEY_FILE, 123456);
         _ = jwt.Token;
     }
 

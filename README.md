@@ -7,20 +7,31 @@
 
 The GitHub Authentication is a library that provides the [fastest way](#benchmarks) to generate a JWT (JSON Web Token) to be used when calling the GitHub REST API.
 
-This library has no dependencies on any external libraries. It is compatible with `net6.0` and beyond.
+This library has no dependencies. It is compatible with `net6.0` and beyond.
 
 ## Usage
 
-The JWT used for authenticate with the GitHub REST API needs information, which is encrypted using the `SHA256` hash algorithm, and signed using `RS256`.
+The first thing necessary is a private key. You can generate the private key on GitHub. Check [this document](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/managing-private-keys-for-github-apps#generating-private-keys) for more information.
+
+The token will be a file with the `PEM` extension. Put it in a location that your software can access.
+
+> For security reasons, never store the PEM file in the repository, even if it is a private repository. Also, never store it in a configuration file.
 
 The simplest way to generate a token is:
 
 ```cs
-var jwt = new GitHubJwt("path/to/pem_file", "123456");
+// Assuming the application ID is 123456 (you can obtain your application ID in GitHub)
+var jwt = new GitHubJwtWithRS256("path/to/pem_file.pem", "123456");
 var token = jwt.Token;
 ```
 
 Everytime you call the `Token` property, it will evaluate if the token needs renewal. If it does, then it will automatically renew it.
+
+The JWT used for authenticate with the GitHub REST API needs a header and a payload, which is encrypted using the `SHA256` hash algorithm, and signed using `RS256`.
+
+The token is comprised of a header, a payload, and the signature. Both the header and payload are encoded with `Base64Url`.
+
+The formula would then be `Base64Url(header).Base64Url(payload).signedToken`.
 
 ### Header
 
@@ -31,7 +42,7 @@ The header should have the algorithm and the type of token.
   "typ": "JWT",
   "alg": "RS256"
 }
-``
+```
 
 ### Payload
 

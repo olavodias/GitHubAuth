@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// GitHubJwtHeader.cs
+// AppAuthenticator.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -24,47 +24,46 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 // *****************************************************************************
-using System;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
-namespace GitHubAuth.Jwt;
+using System;
+using System.Collections.Generic;
+
+namespace GitHubAuth;
 
 /// <summary>
-/// Represents the header of a JSON Web Token to be used by GitHub Apps
+/// A class to authenticate to GitHub as an App
 /// </summary>
-public sealed class GitHubJwtHeader
+public sealed class AppAuthenticator: IAuthenticator
 {
+    private readonly Dictionary<long, AccessToken> _installationTokens = new();
 
     /// <summary>
-    /// The Algorithm to be used for the signature
+    /// A dictionary containing the Installation Tokens
     /// </summary>
-    [JsonPropertyName("alg")]
-    [JsonPropertyOrder(2)]
-    public string Algorithm { get; }
-
-    /// <summary>
-    /// The type of the token
-    /// </summary>
-    [JsonPropertyName("typ")]
-    [JsonPropertyOrder(1)]
-    public string Type { get; } = "JWT";
-
-    /// <summary>
-    /// Initializes a new instance of the <see cref="GitHubJwtHeader"/> class
-    /// </summary>
-    internal GitHubJwtHeader(string algorithm)
+    public Dictionary<long, AccessToken> InstallationTokens
     {
-        Algorithm = algorithm;
+        get
+        {
+            return _installationTokens;
+        }
     }
 
+    
+
     /// <summary>
-    /// Serializes the object into a JSON format
+    /// Initializes a new instance of the <see cref="AppAuthenticator"/> class
     /// </summary>
-    /// <returns>A string containing the serialized object</returns>
-    public string ToJSON()
+    public AppAuthenticator()
     {
-        return JsonSerializer.Serialize(this);
+    }
+
+    public void Authenticate()
+    {
+        Authenticate(null);
+    }
+
+    public void Authenticate(params object[]? args)
+    {
+        
     }
 }
-

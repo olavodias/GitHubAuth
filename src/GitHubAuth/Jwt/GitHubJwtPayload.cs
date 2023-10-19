@@ -104,7 +104,7 @@ public sealed class GitHubJwtPayload
     /// The ID of your GitHub App. This value is used to find the right public key to verify the signature of the JWT. You can find your app's ID with the GET /app REST API endpoint.
     /// </summary>
     [JsonPropertyName("iss")]
-    public string? Issuer
+    public long Issuer
     {
         get { return _issuer; }
         set
@@ -113,23 +113,7 @@ public sealed class GitHubJwtPayload
             OnPropertyChanged?.Invoke(nameof(Issuer));
         }
     }
-    private string? _issuer;
-
-    /// <summary>
-    /// This should be RS256 since your JWT must be signed using the RS256 algorithm.
-    /// </summary>
-    [JsonPropertyName("alg")]
-    [JsonIgnore]
-    public string Algorithm
-    {
-        get { return _algorithm; }
-        set
-        {
-            _algorithm = value;
-            OnPropertyChanged?.Invoke(nameof(Algorithm));
-        }
-    }
-    private string _algorithm = GitHubJwt.ALGORITHM;
+    private long _issuer;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="GitHubJwtPayload"/> class
