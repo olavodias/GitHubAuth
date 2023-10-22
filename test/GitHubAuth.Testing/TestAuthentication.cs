@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// IGitHubJwt.cs
+// TestAuthentication.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -25,22 +25,34 @@
 // THE SOFTWARE.
 // *****************************************************************************
 using System;
-namespace GitHubAuth.Jwt;
+using GitHubAuth.Jwt;
 
-/// <summary>
-/// An interface to be implemented by any class that generates a GitHub JSON Web Token
-/// </summary>
-public interface IGitHubJwt
+namespace GitHubAuth.Testing;
+
+[TestClass]
+public class TestAuthentication
 {
-    /// <summary>
-    /// The Application ID
-    /// </summary>
-    public long AppId { get; set; }
+    private static readonly IGitHubJwt Jwt = new GitHubJwtWithRS256("sample_key.pem", 123456);
+    private static readonly AppAuthenticator AppAuthenticator = new(Jwt);
 
-    /// <summary>
-    /// The JWT Token
-    /// </summary>
-    /// <remarks>Returns null if the system is unable to generate the token. Automatically renews the token when it's near expiration.</remarks>
-    public string? Token { get; }
+    private static readonly HttpClient MockedClient = new(new FakeGitHubMessageHandler())
+    {
+        BaseAddress = new Uri("http://localhost")
+    };
+
+    [TestMethod]
+    public void TestAuthenticateAsApp()
+    {
+        AppAuthenticator.GetClient = () =>
+        {
+            return MockedClient;
+        };
+
+        AppAuthenticator.AuthenticateAsApp().GetAwaiter().GetResult();
+
+        Assert.IsTrue(false);
+
+    }
+
 }
 

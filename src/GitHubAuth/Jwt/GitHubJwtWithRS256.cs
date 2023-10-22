@@ -54,6 +54,13 @@ public sealed class GitHubJwtWithRS256: IGitHubJwt
     /// </summary>
     public GitHubJwtPayload Payload { get; } = new();
 
+    /// <inheritdoc/>
+    public long AppId
+    {
+        get { return Payload.Issuer; }
+        set { Payload.Issuer = value; }
+    }
+
     /// <summary>
     /// Internal variable to store the token
     /// </summary>

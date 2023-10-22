@@ -1,5 +1,5 @@
 ﻿// *****************************************************************************
-// IGitHubJwt.cs
+// AppInstallation.cs
 //
 // Author:
 //       Olavo Henrique Dias <olavodias@gmail.com>
@@ -25,22 +25,25 @@
 // THE SOFTWARE.
 // *****************************************************************************
 using System;
-namespace GitHubAuth.Jwt;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
+
+namespace GitHubAuth;
 
 /// <summary>
-/// An interface to be implemented by any class that generates a GitHub JSON Web Token
+/// A representation of the results of an App Installation
 /// </summary>
-public interface IGitHubJwt
+internal class AppInstallation
 {
-    /// <summary>
-    /// The Application ID
-    /// </summary>
-    public long AppId { get; set; }
+	[JsonPropertyName("id")]
+	public long ID { get; set; }
 
-    /// <summary>
-    /// The JWT Token
-    /// </summary>
-    /// <remarks>Returns null if the system is unable to generate the token. Automatically renews the token when it's near expiration.</remarks>
-    public string? Token { get; }
+	[JsonPropertyName("account")]
+	public Dictionary<string, object> Account { get; init; }
+
+	public AppInstallation()
+	{
+		Account = new Dictionary<string, object>();
+	}
 }
 
