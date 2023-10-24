@@ -32,7 +32,8 @@ namespace GitHubAuth.Testing;
 [TestClass]
 public class TestAuthentication
 {
-    private static readonly IGitHubJwt Jwt = new GitHubJwtWithRS256("sample_key.pem", 123456);
+    private static readonly long ApplicationID = 123456;
+    private static readonly IGitHubJwt Jwt = new GitHubJwtWithRS256("sample_key.pem", ApplicationID);
     private static readonly AppAuthenticator AppAuthenticator = new(Jwt);
 
     private static readonly HttpClient MockedClient = new(new FakeGitHubMessageHandler())
@@ -40,18 +41,41 @@ public class TestAuthentication
         BaseAddress = new Uri("http://localhost")
     };
 
-    [TestMethod]
-    public void TestAuthenticateAsApp()
+    [TestInitialize]
+    public void TestInitialize()
     {
         AppAuthenticator.GetClient = () =>
         {
             return MockedClient;
         };
+    }
 
-        AppAuthenticator.AuthenticateAsApp().GetAwaiter().GetResult();
+    [TestMethod]
+    public void TestAuthenticateAsApp()
+    {
+        AppAuthenticator.Authenticate();
 
-        Assert.IsTrue(false);
+        Assert.AreEqual(2, AppAuthenticator.Installations.Count);
+        Assert.AreEqual(40000000, AppAuthenticator.Installations[0]);
+        Assert.AreEqual(40000001, AppAuthenticator.Installations[1]);
+    }
 
+    [TestMethod]
+    public void TestAuthenticateAsAppInstallation()
+    {
+        // Authenticates with a valid app installation
+        long appInstallationId = 40000000;
+        AppAuthenticator.Authenticate(appInstallationId);
+        Assert.IsTrue(AppAuthenticator.InstallationTokens.ContainsKey(appInstallationId));
+        Assert.AreEqual("ghs_v5xXNXICdEtmQgW4nIX3RwptMsV0r402BEql", AppAuthenticator.InstallationTokens[appInstallationId].Token);
+
+        appInstallationId = 40000001;
+        AppAuthenticator.Authenticate(appInstallationId);
+        Assert.IsTrue(AppAuthenticator.InstallationTokens.ContainsKey(appInstallationId));
+        Assert.AreEqual("shs_v6xXNXICdEtmQgW4nYX3NwptMsV0x402BEwl", AppAuthenticator.InstallationTokens[appInstallationId].Token);
+
+        // Try to authenticate with an invalid app installation
+        Assert.ThrowsException<ArgumentException>(() => AppAuthenticator.Authenticate(123456));
     }
 
 }

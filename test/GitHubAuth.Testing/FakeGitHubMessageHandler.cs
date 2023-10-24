@@ -37,32 +37,40 @@ public sealed class FakeGitHubMessageHandler: HttpMessageHandler
     private static readonly Task<HttpResponseMessage> ResponseStatusInternalServerError = Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.InternalServerError));
     private static readonly Task<HttpResponseMessage> ResponseStatusNotFound = Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
 
-    protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    private static readonly Dictionary<string, System.Net.HttpStatusCode> StatusCodesByMethod = new()
     {
-        if (request.Method == HttpMethod.Get)
-        {
-            if (request.RequestUri is null)
-                return ResponseStatusInternalServerError;
+        { "GET", System.Net.HttpStatusCode.OK },
+        { "POST", System.Net.HttpStatusCode.Created }
+    };
 
-            // Check the Segments of the URI and build a file
-            // Example: segments is an array
-            //   arr[0] = "/"
-            //   arr[1] = "app"
-            //   arr[2] = "installation"
-            //
-            // Results in Responses/App_Installation.json
-            var fileName = Path.Combine("Responses", FileFromSegments(request.RequestUri.Segments));
-            var fileContents = File.ReadAllText(fileName);
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        // URI cannot be null
+        if (request.RequestUri is null)
+            return await ResponseStatusInternalServerError;
 
-            var response = new HttpResponseMessage(System.Net.HttpStatusCode.OK);
-            var content = new StringContent(fileContents, Encoding.UTF8, "application/json");
+        // Request Method
+        var requestMethod = request.Method.Method.ToUpper();
 
-            response.Content = content;
+        // Check the Segments of the URI and build a file
+        // Example: segments is an array
+        //   arr[0] = "/"
+        //   arr[1] = "app"
+        //   arr[2] = "installation"
+        //
+        // Results in Responses/GET_App_Installation.json
+        var fileName = Path.Combine("Responses", $"{requestMethod}_{FileFromSegments(request.RequestUri.Segments)}");
+        if (!File.Exists(fileName))
+            return await ResponseStatusNotFound;
 
-            return Task.FromResult(response);
-        }
+        var fileContents = File.ReadAllText(fileName);
 
-        return ResponseStatusNotFound;
+        // Set the Response code
+        var response = new HttpResponseMessage(StatusCodesByMethod[requestMethod]);
+        var content = new StringContent(fileContents, Encoding.UTF8, "application/json");
+
+        response.Content = content;
+        return await Task.FromResult(response);
     }
 
     private static string FileFromSegments(string[] segments)
@@ -71,11 +79,19 @@ public sealed class FakeGitHubMessageHandler: HttpMessageHandler
 
         foreach (var segment in from s
                                 in segments
-                                select s.TrimEnd('/')                               )
+                                select s.TrimEnd('/'))
         {
             if (segment.Length > 0)
             {
-                sb.Append(CapitalizeFirstLetter(segment.ToLower()));
+                var splittedSegments = segment.Split('_');
+                string newSegment = string.Empty;
+
+                foreach (var splittedSegment in splittedSegments)
+                {
+                    newSegment += CapitalizeFirstLetter(splittedSegment);
+                }
+
+                sb.Append(newSegment);
                 sb.Append('_');
             }
         }

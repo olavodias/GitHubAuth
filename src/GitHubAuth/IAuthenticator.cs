@@ -37,13 +37,11 @@ public interface IAuthenticator
     /// <summary>
     /// Authenticate to GitHub
     /// </summary>
-    /// <exception cref="ArgumentException">Thrown when the authentication parameters are not valid to authenticate</exception>
     public void Authenticate();
 
     /// <summary>
     /// Authenticate to GitHub
     /// </summary>
     /// <param name="args">An object array with arguments to be used by the authentication</param>
-    /// <exception cref="ArgumentException">Thrown when the authentication parameters are not valid to authenticate</exception>
     public void Authenticate(params object[] args);
 }
