@@ -35,13 +35,89 @@ namespace GitHubAuth;
 public interface IAuthenticator
 {
     /// <summary>
-    /// Authenticate to GitHub
+    /// Returns the token to be used for authentication
     /// </summary>
-    public void Authenticate();
+    /// <returns>An object containing the components necessary to perform authentication</returns>
+    public AuthenticationData GetToken();
+    /// <summary>
+    /// Returns the token to be used for authentication
+    /// </summary>
+    /// <param name="input">A parameter to be used when generating the token</param>
+    /// <returns>An object containing the components necessary to perform authentication</returns>
+    public AuthenticationData GetToken<T>(T input);
+}
+
+/// <summary>
+/// Represents the response of the Authentication Process
+/// </summary>
+public struct AuthenticationData
+{
+    /// <summary>
+    /// The type of the token
+    /// </summary>
+    public AuthenticationTokenType TokenType { get; private set; }
+    /// <summary>
+    /// The string containing the token
+    /// </summary>
+    public string Token { get; private set; }
 
     /// <summary>
-    /// Authenticate to GitHub
+    /// Initializes a new instance of the <see cref="AuthenticationData"/> struct
     /// </summary>
-    /// <param name="args">An object array with arguments to be used by the authentication</param>
-    public void Authenticate(params object[] args);
+    /// <param name="tokenType">The type of the token</param>
+    /// <param name="token">A string containing the token</param>
+    public AuthenticationData(AuthenticationTokenType tokenType, string token)
+    {
+        TokenType = tokenType;
+        Token = token;
+    }
+}
+
+/// <summary>
+/// Represents an Authentication Token Type
+/// </summary>
+public struct AuthenticationTokenType
+{
+    /// <summary>
+    /// A constant representing the Token mode
+    /// </summary>
+    public const string MODE_TOKEN = "Token";
+    /// <summary>
+    /// A constant representing the Bearer mode
+    /// </summary>
+    public const string MODE_BEARER = "Bearer";
+
+    /// <summary>
+    /// The ID of the Authentication Token Type
+    /// </summary>
+    public int ID { get; private set; }
+    /// <summary>
+    /// The mode of using the token
+    /// </summary>
+    public string Mode { get; private set; }
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="AuthenticationTokenType"/> struct
+    /// </summary>
+    /// <param name="id"></param>
+    /// <param name="mode"></param>
+    public AuthenticationTokenType(int id, string mode)
+    {
+        ID = id;
+        Mode = mode;
+    }
+
+    /// <summary>
+    /// Represents a GitHub App Token, containing the JWT
+    /// </summary>
+    public static AuthenticationTokenType AppToken => new(10, MODE_BEARER);
+    /// <summary>
+    /// Represents a GitHub App Installation Token
+    /// </summary>
+    public static AuthenticationTokenType AppInstallationToken => new(20, MODE_TOKEN);
+    /// <summary>
+    /// Represents a GitHub Personal Access Token
+    /// </summary>
+    public static AuthenticationTokenType PersonalAccessToken => new(30, MODE_TOKEN);
+
 }

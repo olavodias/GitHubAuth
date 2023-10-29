@@ -48,9 +48,20 @@ public sealed class AppAuthenticator: IAuthenticator
     private readonly object _installationsLock = new();
 
     /// <summary>
-    /// A list containing all the installations the GitHub App has access to
+    /// The internal list containing all the installations the GitHub App has access to
     /// </summary>
-    internal List<long> Installations { get; init; }
+    internal List<long> InstallationsInternalList { get; init; } = new();
+
+    /// <summary>
+    /// A read-only list of Installations
+    /// </summary>
+    public IReadOnlyList<long> Installations
+    {
+        get
+        {
+            return InstallationsInternalList.AsReadOnly();
+        }
+    }
 
     /// <summary>
     /// An internal object to be used when locking the Installation Token Dictionary
@@ -58,14 +69,25 @@ public sealed class AppAuthenticator: IAuthenticator
     private readonly object _installationTokenLock = new();
 
     /// <summary>
-    /// A dictionary containing the Installation Tokens
+    /// The internal dictionary containing the Installation Tokens
     /// </summary>
-    internal Dictionary<long, AccessToken> InstallationTokens { get; init; }
+    internal Dictionary<long, AccessToken> InstallationTokensInternalDictionary { get; init; } = new();
+
+    /// <summary>
+    /// A read-only dictionary of Installation Tokens
+    /// </summary>
+    public IReadOnlyDictionary<long, AccessToken> InstallationTokens
+    {
+        get
+        {
+            return new System.Collections.ObjectModel.ReadOnlyDictionary<long, AccessToken>(InstallationTokensInternalDictionary);
+        }
+    }
 
     /// <summary>
     /// The JSON Web Token to be used for the GitHub REST API
     /// </summary>
-    private IGitHubJwt Jwt { get; init; }
+    public IGitHubJwt Jwt { get; init; }
 
     /// <summary>
     /// A function to retrieve the Api Client
@@ -76,60 +98,120 @@ public sealed class AppAuthenticator: IAuthenticator
     /// <summary>
     /// Initializes a new instance of the <see cref="AppAuthenticator"/> class
     /// </summary>
-    public AppAuthenticator(IGitHubJwt jwt)
+    /// <param name="privateKeyFileName">The path to the PEM file</param>
+    /// <param name="appId">The GitHub Application ID</param>
+    public AppAuthenticator(string privateKeyFileName, long appId)
     {
-        Installations = new();
-        InstallationTokens = new();
-        Jwt = jwt;
-    }
-
-    /// <inheritdoc/>
-    /// <exception cref="NullReferenceException">Thrown when the system could not parse the results of the API request</exception>
-    /// <exception cref="MissingMemberException">Thrown when there is no implementation for the <see cref="GetClient"/> property</exception>
-    /// <exception cref="ArgumentException">Thrown when the installation ID is not valid for the GitHub App</exception>
-    public void Authenticate()
-    {
-        AuthenticateAsApp(); // Calling Autheticate(null) would be the same and make the code, perhaps, more concise. However, for performance reasons, it's unecessary to call the same code twice.
-    }
-
-    /// <inheritdoc/>
-    /// <exception cref="NullReferenceException">Thrown when the system could not parse the results of the API request</exception>
-    /// <exception cref="MissingMemberException">Thrown when there is no implementation for the <see cref="GetClient"/> property</exception>
-    /// <exception cref="ArgumentException">Thrown when the installation ID is not valid for the GitHub App</exception>
-    public void Authenticate(params object[] args)
-    {
-        if (args is null)
-        {
-            AuthenticateAsApp();
-            return;
-        }
-
-        if (args.Length == 1)
-        {
-            if (args[0] is not null)
-            {
-                var s = args[0].ToString();
-                if (s is not null)
-                {
-                    long appInstallationId = long.Parse(s);
-
-                    AuthenticateAsAppInstallation(appInstallationId);
-                    return;
-                }
-            }
-        }
-
-        // Input is invalid
-        throw new ArgumentException("Arguments for authentication are invalid. Expect a null array or an array with the Application ID (long).");
+        Jwt = new GitHubJwtWithRS256(privateKeyFileName, appId);
     }
 
     /// <summary>
-    /// Authenticate to GitHub as an App
+    /// Initializes a new instance of the <see cref="AppAuthenticator"/> class
+    /// </summary>
+    /// <param name="jwt">The JWT to be used by the Authenticator</param>
+    public AppAuthenticator(IGitHubJwt jwt)
+    {
+        Jwt = jwt;
+    }
+
+    /// <summary>
+    /// Returns the JWT to be used to authenticate as a GitHub App
+    /// </summary>
+    /// <returns>An object containing the components necessary to perform authentication</returns>
+    public AuthenticationData GetToken()
+    {
+        if (Jwt.Token is null)
+            throw new NullReferenceException("The system could not generate a valid JWT Token");
+
+        return new AuthenticationData(AuthenticationTokenType.AppToken, Jwt.Token);
+    }
+
+    /// <inheritdoc/>
+    /// <remarks>The input should be the Application Installation ID, which is a <see cref="long"/> field. A value of type <see cref="string"/> will be converted to long.</remarks>
+    /// <exception cref="ArgumentException">Thrown when the input value is not acceptable</exception>
+    public AuthenticationData GetToken<T>(T input)
+    {
+        if (input is long longInput)
+            return GetTokenForApplicationInstallationID(longInput);
+
+        if (input is int intInput)
+            return GetTokenForApplicationInstallationID((long)intInput);
+
+        if (input is byte byteInput)
+            return GetTokenForApplicationInstallationID((long)byteInput);
+
+        if (input is string stringInput)
+        {
+            // Attempt to convert the string to long
+            if (!long.TryParse(stringInput, out longInput))
+                throw new ArgumentException($"The value \"{stringInput}\" could not be converted to a number");
+
+            return GetTokenForApplicationInstallationID(longInput);
+        }
+
+        throw new ArgumentException($"The input \"{input}\" has an invalid value");
+    }
+
+    /// <summary>
+    /// Returns the token to be used when authentication as an Application Installation
+    /// </summary>
+    /// <param name="applicationInstallationID">The Application Installation ID</param>
+    /// <returns></returns>
+    /// <exception cref="MissingMemberException">Thrown when there is no implementation for the <see cref="GetClient"/> property</exception>
+    /// <exception cref="ArgumentException">Thrown when the Application Installation ID is not valid for the GitHub App</exception>
+    /// <exception cref="NullReferenceException">Thrown when the Token has a null value</exception>
+    private AuthenticationData GetTokenForApplicationInstallationID(long applicationInstallationID)
+    {
+        // Ensure the GetClient property is implemented
+        if (GetClient is null) throw new MissingMemberException($"\"{nameof(GetClient)}\" is not implemented", nameof(GetClient));
+
+        // Ensure the installation is valid for the app
+        if (!InstallationsInternalList.Contains(applicationInstallationID))
+        {
+            GetApplicationsIDForApp();
+            if (!InstallationsInternalList.Contains(applicationInstallationID))
+                throw new ArgumentException($"Installation '{applicationInstallationID}' is not valid for GitHub App '{Jwt.AppId}'", nameof(applicationInstallationID));
+        }
+
+        // The authentication as an app installation needs a token
+        lock (_installationTokenLock)
+        {
+            InstallationTokensInternalDictionary.TryGetValue(applicationInstallationID, out var accessToken);
+
+            if ((accessToken is not null && accessToken.ExpiresAt < DateTime.UtcNow.AddMinutes(2)) ||
+                (accessToken is null))
+            {
+                // Token needs to be generated
+
+                // A token is generated by making a POST request to the https://api.github.com/app/installations/$$installation_id$$/access_tokens. The JWT must be passed in the header.
+                var client = GetClient();
+
+                // The authentication as an app needs a JWT
+                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Jwt.Token);
+                var response = client.PostAsync($"app/installations/{applicationInstallationID}/access_tokens", null).GetAwaiter().GetResult();
+
+                if (!response.IsSuccessStatusCode)
+                    throw new ArgumentException($"Unable to generate an access token for \"{applicationInstallationID}\"");
+
+                // Process the response into a valid AccessToken
+                accessToken = response.Content.ReadFromJsonAsync<AccessToken>().GetAwaiter().GetResult() ?? throw new NullReferenceException("Unable to parse results from POST request");
+                InstallationTokensInternalDictionary.Add(applicationInstallationID, accessToken);
+            }
+
+            if (accessToken.Token is null)
+                throw new NullReferenceException($"The access token for the app installation \"{applicationInstallationID}\" is null");
+
+            return new AuthenticationData(AuthenticationTokenType.AppInstallationToken, accessToken.Token);
+        }
+    }
+
+    /// <summary>
+    /// Get the Application IDs valid for the given GitHub App
     /// </summary>
     /// <remarks>The authentication as an App will call the API and retrieve all valid Installation ID's for the App</remarks>
     /// <exception cref="NullReferenceException">Thrown when the system could not parse the results of the GET request</exception>
     /// <exception cref="MissingMemberException">Thrown when there is no implementation for the <see cref="GetClient"/> property</exception>
-    internal void AuthenticateAsApp()
+    private void GetApplicationsIDForApp()
     {
         // Ensure the GetClient property is implemented
         if (GetClient is null) throw new MissingMemberException($"\"{nameof(GetClient)}\" is not implemented", nameof(GetClient));
@@ -149,57 +231,11 @@ public sealed class AppAuthenticator: IAuthenticator
         // Recreate the list with the new application installations
         lock (_installationsLock)
         {
-            Installations.Clear();
+            InstallationsInternalList.Clear();
 
             foreach (var appInstallation in listOfAppInstallations)
             {
-                Installations.Add(appInstallation.ID);
-            }
-        }
-    }
-
-    /// <summary>
-    /// Authenticate to GitHub as an App Installation
-    /// </summary>
-    /// <param name="appInstallationId">The Installation ID</param>
-    /// <exception cref="NullReferenceException">Thrown when the system could not parse the results of the POST request</exception>
-    /// <exception cref="MissingMemberException">Thrown when there is no implementation for the <see cref="GetClient"/> property</exception>
-    /// <exception cref="ArgumentException">Thrown when the installation ID is not valid for the GitHub App</exception>
-    internal void AuthenticateAsAppInstallation(long appInstallationId)
-    {
-        // Ensure the GetClient property is implemented
-        if (GetClient is null) throw new MissingMemberException($"\"{nameof(GetClient)}\" is not implemented", nameof(GetClient));        
-
-        // Ensure the installation is valid for the app
-        if (!Installations.Contains(appInstallationId))
-        {
-            AuthenticateAsApp();
-            if (!Installations.Contains(appInstallationId))
-                throw new ArgumentException($"Installation '{appInstallationId}' is not valid for GitHub App '{Jwt.AppId}'", nameof(appInstallationId));
-        }
-
-        // The authentication as an app installation needs a token
-        lock (_installationTokenLock)
-        {
-            InstallationTokens.TryGetValue(appInstallationId, out var accessToken);
-
-            if ((accessToken is not null && accessToken.ExpiresAt < DateTime.UtcNow.AddMinutes(2)) ||
-                (accessToken is null))
-            {
-                // Token needs to be generated
-
-                // A token is generated by making a POST request to the https://api.github.com/app/installations/$$installation_id$$/access_tokens. The JWT must be passed in the header.
-                var client = GetClient();
-
-                // The authentication as an app needs a JWT
-                client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Jwt.Token);
-                var response = client.PostAsync($"app/installations/{appInstallationId}/access_tokens", null).GetAwaiter().GetResult();
-
-                response.EnsureSuccessStatusCode();
-
-                // Process the response into a valid AccessToken
-                accessToken = response.Content.ReadFromJsonAsync<AccessToken>().GetAwaiter().GetResult() ?? throw new NullReferenceException("Unable to parse results from POST request");
-                InstallationTokens.Add(appInstallationId, accessToken);
+                InstallationsInternalList.Add(appInstallation.ID);
             }
         }
     }

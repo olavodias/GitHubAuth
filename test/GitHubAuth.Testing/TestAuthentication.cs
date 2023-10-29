@@ -51,31 +51,28 @@ public class TestAuthentication
     }
 
     [TestMethod]
-    public void TestAuthenticateAsApp()
+    public void TestGetTokenForAppInstallation()
     {
-        AppAuthenticator.Authenticate();
-
-        Assert.AreEqual(2, AppAuthenticator.Installations.Count);
-        Assert.AreEqual(40000000, AppAuthenticator.Installations[0]);
-        Assert.AreEqual(40000001, AppAuthenticator.Installations[1]);
-    }
-
-    [TestMethod]
-    public void TestAuthenticateAsAppInstallation()
-    {
-        // Authenticates with a valid app installation
+        // Authenticates with a valid app installation (40000000)
         long appInstallationId = 40000000;
-        AppAuthenticator.Authenticate(appInstallationId);
-        Assert.IsTrue(AppAuthenticator.InstallationTokens.ContainsKey(appInstallationId));
-        Assert.AreEqual("ghs_v5xXNXICdEtmQgW4nIX3RwptMsV0r402BEql", AppAuthenticator.InstallationTokens[appInstallationId].Token);
+        var authData = AppAuthenticator.GetToken(appInstallationId);
 
-        appInstallationId = 40000001;
-        AppAuthenticator.Authenticate(appInstallationId);
+        Assert.IsTrue(AppAuthenticator.InstallationTokensInternalDictionary.ContainsKey(appInstallationId));
         Assert.IsTrue(AppAuthenticator.InstallationTokens.ContainsKey(appInstallationId));
-        Assert.AreEqual("shs_v6xXNXICdEtmQgW4nYX3NwptMsV0x402BEwl", AppAuthenticator.InstallationTokens[appInstallationId].Token);
+
+        Assert.AreEqual("ghs_v5xXNXICdEtmQgW4nIX3RwptMsV0r402BEql", authData.Token);
+
+        // Authenticates with a valid app installation (40000001)
+        appInstallationId = 40000001;
+        authData = AppAuthenticator.GetToken(appInstallationId);
+
+        Assert.IsTrue(AppAuthenticator.InstallationTokensInternalDictionary.ContainsKey(appInstallationId));
+        Assert.IsTrue(AppAuthenticator.InstallationTokens.ContainsKey(appInstallationId));
+
+        Assert.AreEqual("shs_v6xXNXICdEtmQgW4nYX3NwptMsV0x402BEwl", authData.Token);
 
         // Try to authenticate with an invalid app installation
-        Assert.ThrowsException<ArgumentException>(() => AppAuthenticator.Authenticate(123456));
+        Assert.ThrowsException<ArgumentException>(() => AppAuthenticator.GetToken<long>(123456));
     }
 
 }
