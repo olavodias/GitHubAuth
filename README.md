@@ -1,4 +1,4 @@
-# GitHub Authentication
+# GitHub Authentication .NET
 
 [![nuget](https://img.shields.io/nuget/v/GitHubAuth.svg)](https://www.nuget.org/packages/GitHubAuth/) 
 ![GitHub release](https://img.shields.io/github/release/olavodias/GitHubAuth.svg)
@@ -10,6 +10,8 @@ The GitHub Authentication is a library that provides classes to facilitate the a
 It contains the [fastest way](#benchmarks) to generate a JWT (JSON Web Token), which is a pre-requisite when authenticating to the GitHub REST API as an Application or an Application Installation.
 
 This library has no dependencies. It is compatible with `net6.0` and beyond.
+
+Refer to the [API Documentation](https://olavodias.github.io/GitHubApps) to have a better understanding of each class and how to use it.
 
 ## Generating a JWT (JSON Web Token)
 
