@@ -20,7 +20,7 @@
     <PackageTags>GitHub Apps .NET Git Hub Dot Net JWT Authentication GitHubJWT JSON Web Token</PackageTags>    
     <PackageReadmeFile>README.MD</PackageReadmeFile>
     <PackageIcon>packageIcon.png</PackageIcon>
-    <PackageProjectUrl>https://github.com/olavodias/GitHubApps</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/olavodias/GitHubAuth</PackageProjectUrl>
     <PackageLicenseExpression></PackageLicenseExpression>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RootNamespace>GitHubAuth</RootNamespace>
