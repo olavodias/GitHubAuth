@@ -242,8 +242,10 @@ public sealed class AppAuthenticator: IAuthenticator
         if (GetClient is null) throw new MissingMemberException($"\"{nameof(GetClient)}\" is not implemented", nameof(GetClient));
 
         var client = GetClient();
+        client.DefaultRequestHeaders.Clear();
         client.DefaultRequestHeaders.Accept.Clear();
-        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github.v3+json"));
+        client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
+        client.DefaultRequestHeaders.Add("User-Agent", nameof(AppAuthenticator));
 
         // The authentication as an app needs a JWT
         client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Jwt.Token);

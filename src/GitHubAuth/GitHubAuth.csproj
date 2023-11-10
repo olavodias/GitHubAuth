@@ -7,7 +7,7 @@
 
     <!-- Nuget Package Info -->
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.1</Version>
+    <Version>1.0.2-preview.1</Version>
     <Authors>Olavo Henrique Dias</Authors>
     <Company>Olavo Henrique Dias</Company>
     <Product>GitHubAuth</Product>
